@@ -1,5 +1,10 @@
 #![allow(non_snake_case)]
 
+
+// This is the begenning, oboio!
+
+
+
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
