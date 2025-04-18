@@ -1,9 +1,20 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#[derive(Debug)]
+pub struct Servo {
+    pub pos_max: u16,
+    pub pos_min: u16,
+    pub current_pos: u16,
+    pub description: String,
+}
 
-use learm_cpr_lib::LeArm;
-use learm_cpr_lib::Servo;
-
+#[derive(Debug)]
+pub struct LeArm {
+    pub servo_1: Servo,
+    pub servo_2: Servo,
+    pub servo_3: Servo,
+    pub servo_4: Servo,
+    pub servo_5: Servo,
+    pub servo_6: Servo,
+}
 fn main() {
     let mut le_arm = LeArm {
         servo_1: Servo {
@@ -43,5 +54,4 @@ fn main() {
             description: String::from("Base, Joint 1"),
         },
     };
-    learm_cpr_lib::run()
 }
