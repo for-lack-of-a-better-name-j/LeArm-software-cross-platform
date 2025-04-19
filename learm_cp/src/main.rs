@@ -1,80 +1,82 @@
 use dioxus::prelude::*;
-
+use tracing::info;
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 const HEADER_SVG: Asset = asset!("/assets/header.svg");
 
-#[derive(Debug)]
-pub struct Servo {
-    pub pos_max: u16,
-    pub pos_min: u16,
-    pub current_pos: u16,
-    pub description: String,
-}
+static ICON: Asset = asset!("/assets/crappy_learm_standin.png");
 
-#[derive(Debug)]
-pub struct LeArm {
-    pub servo_1: Servo,
-    pub servo_2: Servo,
-    pub servo_3: Servo,
-    pub servo_4: Servo,
-    pub servo_5: Servo,
-    pub servo_6: Servo,
-}
 fn main() {
-    let mut le_arm = LeArm {
-        servo_1: Servo {
-            pos_max: 2500,
-            pos_min: 1500,
-            current_pos: 2000, // TODO: Figure out what the servo home positions are
-            description: String::from("Gripper, Joint 6"),
-        },
-        servo_2: Servo {
-            pos_max: 2500,
-            pos_min: 500,
-            current_pos: 2000, // TODO: Figure out what the servo home positions are
-            description: String::from("Joint 5"),
-        },
-        servo_3: Servo {
-            pos_max: 2500,
-            pos_min: 500,
-            current_pos: 2000, // TODO: Figure out what the servo home positions are
-            description: String::from("Joint 4"),
-        },
-        servo_4: Servo {
-            pos_max: 2500,
-            pos_min: 500,
-            current_pos: 2000, // TODO: Figure out what the servo home positions are
-            description: String::from("Joint 3"),
-        },
-        servo_5: Servo {
-            pos_max: 2500,
-            pos_min: 500,
-            current_pos: 2000, // TODO: Figure out what the servo home positions are
-            description: String::from("Joint 2"),
-        },
-        servo_6: Servo {
-            pos_max: 2500,
-            pos_min: 500,
-            current_pos: 2000, // TODO: Figure out what the servo home positions are
-            description: String::from("Base, Joint 1"),
-        },
-    };
-
     dioxus::launch(App);
+}
+
+/*#[derive(Props, PartialEq, Clone)]
+struct DogAppProps {
+    breed: String,
+}*/
+
+/*#[component]
+fn DogApp(props: DogAppProps) -> Element {
+    rsx! {
+        "Breed: {props.breed}"
+    }
+}*/
+
+#[component]
+fn Title() -> Element {
+    rsx! {
+        div { id: "title",
+              h1 { "HotDog!  🌭 🌭 🌭 🌭 🌭 🌭 🌭 🌭 🌭 🌭 🌭 🌭 🌭"}}
+    }
+}
+
+#[component]
+fn DogView() -> Element {
+    let img_src = use_hook(|| "https://images.dog.ceo/breeds/pitbull/dog-3981540_1280.jpg");
+
+    rsx! {
+        div {
+            id: "dogview",
+            img {src: "{img_src}"}
+        }
+        div {id: "buttons",
+            button {id: "skip", "skip"}
+            button {id: "save", "save!"}
+
+        }
+    }
+}
+
+#[derive(Clone)]
+struct TitleState(String);
+
+fn title() -> Element {
+    let title_ = use_context::<TitleState>();
+    rsx! {
+        h1 { "{title_.0}"}
+    }
+}
+
+#[derive(Clone, Copy)]
+struct MusicPlayer {
+    song: Signal<String>,
+}
+
+fn use_music_player_provider() {
+    let song = use_signal(|| "Not That".to_string());
+    use_context_provider(|| MusicPlayer { song });
 }
 
 #[component]
 fn App() -> Element {
     rsx! {
-        document::Link { rel: "icon", href: FAVICON }
-        document::Link { rel: "stylesheet", href: MAIN_CSS }
-        Hero {}
-
+        document::Stylesheet{ href: MAIN_CSS }
+        Title {}
+        DogView {}
     }
 }
 
-#[component]
+/*#[component]
 pub fn Hero() -> Element {
     rsx! {
         div {
@@ -90,4 +92,4 @@ pub fn Hero() -> Element {
             }
         }
     }
-}
+}*/
