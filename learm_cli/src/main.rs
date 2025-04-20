@@ -1,5 +1,6 @@
 use rusb::{Context, Device, DeviceDescriptor, DeviceHandle, Error, UsbContext};
 use std::str::FromStr;
+use std::thread;
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -25,6 +26,8 @@ struct DeviceInfo {
     vendor_id: u16,
     product_id: u16,
     interface_num: u8,
+    endpoint_in: u8,
+    endpoint_out: u8,
     handle: DeviceHandle<rusb::Context>,
 }
 
@@ -37,6 +40,8 @@ fn find_hid_device(
     vendor_id: u16,
     product_id: u16,
     interface_number: u8, // add interface number
+    endpoint_out: u8,     // the bEndpointAddress of the endpoint to write to
+    endpoint_in: u8,
 ) -> Result<DeviceInfo, Error> {
     // Iterate over all devices connected to the system
     for device in context.devices()?.iter() {
@@ -45,8 +50,15 @@ fn find_hid_device(
         if device_descriptor.vendor_id() == vendor_id
             && device_descriptor.product_id() == product_id
         {
+            // print some information about the device
+            /*let device_desc = device
+                .active_config_descriptor()
+                .expect("couldn't open active config descriptor");
+            println!("{:?}", device_desc);
+            println!("{:?}", device_descriptor);*/
+
             // Attempt to open the device
-            let mut handle = match device.open() {
+            let handle = match device.open() {
                 Ok(handle) => handle,
                 Err(err) => {
                     eprintln!("Failed to open device: {}", err);
@@ -54,19 +66,52 @@ fn find_hid_device(
                     // TODO: Ensure this does not cause an infinite loop.
                 }
             };
+            let active_config = handle
+                .active_configuration()
+                .expect("Couldn't get active configuration.");
+            println!("Active configuration: {:?}", active_config);
+
+            // Tell the interface to auto detach kernel driver
+            match handle.set_auto_detach_kernel_driver(true) {
+                Ok(()) => {
+                    println!("Successfully set automatic kernel driver detachment!");
+                }
+                Err(err) => {
+                    println!(
+                        "Failed to set automatic kernel detachment with error {}. Your platform may not be supported.",
+                        err
+                    )
+                }
+            };
+            /*handle
+            .set_active_configuration(1)
+            .expect("Failed to set active configuration!");*/
 
             // Claim the interface. This is crucial for being able to send data.
+            //handle.detach_kernel_driver(0).expect("uh-oh");
             if let Err(err) = handle.claim_interface(interface_number) {
                 eprintln!("Failed to claim interface {}: {}", interface_number, err);
                 // Dont return here, try to continue. Device might be in use, or have other issues.
                 // TODO: Ensure this does not cause an infinite loop.
             } else {
                 println!("Interface claimed successfully!");
+
+                thread::sleep(Duration::from_millis(1000));
+                let reqtype: u8 = 0x21;
+                let req: u8 = 0x0a;
+                let w_value: u16 = 0x0000;
+                let w_index: u16 = 0;
+                let timeout = Duration::from_millis(1000); // 1 second timeout
+                handle
+                    .write_control(reqtype, req, w_value, w_index, &mut [], timeout)
+                    .expect("failed to set idle");
             }
             return Ok(DeviceInfo {
                 vendor_id: vendor_id,
                 product_id: product_id,
                 interface_num: interface_number,
+                endpoint_in: endpoint_in,
+                endpoint_out: endpoint_out,
                 handle,
             });
         }
@@ -87,18 +132,13 @@ fn send_hex_report(
     let bytes = hex_to_bytes(hex_data)?;
     let handle = &mut device_info.handle;
 
-    // Prepend the report ID to the data. HID reports often start with an ID.
-    let mut data_with_id = vec![report_id];
-    data_with_id.extend_from_slice(&bytes);
-    let data_to_send = &data_with_id;
-
-    // Send the data as a control transfer. HID devices often use control transfers.
-    // This is the most common way to send data. Alternative is Interrupt Transfer.
+    // NOTE: Using interrupt transfer.
     let timeout = Duration::from_millis(1000); // 1 second timeout
 
     // Print the data being sent
-    println!("Sending data {:x?}", data_to_send);
-    let result = handle.write_interrupt(device_info.interface_num, data_to_send, timeout);
+    println!("Sending data {:x?}", bytes);
+    let result = handle.write_interrupt(device_info.endpoint_out, &bytes, timeout);
+    let result2 = handle.read_interrupt(device_info.endpoint_in, &mut [], timeout);
 
     match result {
         Ok(bytes_written) => {
@@ -119,6 +159,7 @@ fn hex_to_bytes(hex_string: &str) -> Result<Vec<u8>, Error> {
     // Remove any spaces or non-hex characters from the string.
     let hex_string = hex_string.to_lowercase();
     let hex_string = hex_string.replace(" ", "");
+    println!("{}", hex_string);
 
     //Check if the string has an even number of characters.
     if hex_string.len() % 2 != 0 {
@@ -142,7 +183,7 @@ fn hex_to_bytes(hex_string: &str) -> Result<Vec<u8>, Error> {
 }
 
 fn main() {
-    let mut le_arm = LeArm {
+    /*let mut le_arm = LeArm {
         servo_1: Servo {
             pos_max: 2500,
             pos_min: 1500,
@@ -179,7 +220,7 @@ fn main() {
             current_pos: 2000, // TODO: Figure out what the servo home positions are
             description: String::from("Base, Joint 1"),
         },
-    };
+    };*/
 
     // initialize the rusb context.
     let context = rusb::Context::new().expect("Couldn't open rusb context.");
@@ -189,14 +230,24 @@ fn main() {
     let product_id: u16 = 0x5750; // LED badge -- mini LED display -- 11x44
     // NOTE: It is a little odd that the LeArm's USB controller shows up as an LED display.
     let interface_number: u8 = 0; // Most HID devices use interface 0. Check with lsusb -v
+    let endpoint_out: u8 = 0x01; // specify the endpoint out address
+    let endpoint_in: u8 = 0x81;
 
     // Find the HID device.
-    let mut device_info = find_hid_device(&context, vendor_id, product_id, interface_number)
-        .expect("Could not find HID device!");
+    let mut device_info = find_hid_device(
+        &context,
+        vendor_id,
+        product_id,
+        interface_number,
+        endpoint_out,
+        endpoint_in,
+    )
+    .expect("Could not find HID device!");
     println!("Device found and opened successfully!");
 
     // Example hexadecimal data to send (replace with your desired data).
-    let hex_data = "0102030405060708";
+    //let hex_data = "55 55 08 03 01      00 00 06 ab 05 00 00 00 00 00 00 00 00 00 00 00       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00       00 00 00 00 00 00 00 00 00 00 00";
+    let hex_data = "55 55 08 03 0100 00 06 b4 08 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00";
     let report_id: u8 = 0x00; // Set the Report ID. 0 is common, check your device.
 
     // Send the hexadecimal data to the device.
