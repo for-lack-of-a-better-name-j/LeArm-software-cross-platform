@@ -261,7 +261,7 @@ fn main() {
     //let hex_data = "55 55 08 03 01 00 00 06 b4 08 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00";
     // I'll try it again without the trailing zeros:
     //let hex_data = "55 55 08 03 01 00 00 05 dc 05";
-    let hex_data = "55 55 08 03 01 00 00 06 d0 07";
+    let hex_data = "55 55 08 03 01 00 00 06 c4 09";
     //let hex_data = "55 55 08 03 01 00 00 06 b4 08";
     let report_id: u8 = 0x00; // Set the Report ID. 0 is common, check your device.
 
