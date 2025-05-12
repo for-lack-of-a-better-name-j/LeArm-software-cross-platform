@@ -226,7 +226,7 @@ fn main() {
     let context = rusb::Context::new().expect("Couldn't open rusb context.");
 
     // Specify the Vendor ID and Product ID of your HID device.
-    let vendor_id: u16 = 0x0483; // STMicroelectronics
+    let vendor_id: u16 = 0x0483; // STMicroelectronics 
     let product_id: u16 = 0x5750; // LED badge -- mini LED display -- 11x44
     // NOTE: It is a little odd that the LeArm's USB controller shows up as an LED display.
     let interface_number: u8 = 0; // Most HID devices use interface 0. Check with lsusb -v
@@ -245,9 +245,24 @@ fn main() {
     .expect("Could not find HID device!");
     println!("Device found and opened successfully!");
 
-    // Example hexadecimal data to send (replace with your desired data).
-    //let hex_data = "55 55 08 03 01      00 00 06 ab 05 00 00 00 00 00 00 00 00 00 00 00       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00       00 00 00 00 00 00 00 00 00 00 00";
-    let hex_data = "55 55 08 03 0100 00 06 b4 08 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00";
+    // Now I'll try it without the trailing zeros:
+    //let hex_data = "55 55 08 03 01 00 00 06 ab 05";
+    /*let hex_data = "55  start byte
+     *                 55  start byte
+     *                 08  Length of data - there is a formula for this in each command
+     *                 03  command value
+     *                 01  Number of controlled servos
+     *                 00  lower time value of 8 bits
+     *                 00  higher time value of 8 bits
+     *                 06  Servo ID number
+     *                 b4 lower the angle position value of 8 bits
+     *                  08 higher the angle position value of 8 bits
+     *                  ";*/
+    //let hex_data = "55 55 08 03 01 00 00 06 b4 08 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00";
+    // I'll try it again without the trailing zeros:
+    //let hex_data = "55 55 08 03 01 00 00 05 dc 05";
+    let hex_data = "55 55 08 03 01 00 00 06 d0 07";
+    //let hex_data = "55 55 08 03 01 00 00 06 b4 08";
     let report_id: u8 = 0x00; // Set the Report ID. 0 is common, check your device.
 
     // Send the hexadecimal data to the device.
