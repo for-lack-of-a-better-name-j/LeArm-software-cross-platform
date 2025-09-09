@@ -91,7 +91,8 @@ fn find_hid_device(
             //handle.detach_kernel_driver(0).expect("uh-oh");
             if let Err(err) = handle.claim_interface(interface_number) {
                 eprintln!("Failed to claim interface {}: {}", interface_number, err);
-                // Dont return here, try to continue. Device might be in use, or have other issues.
+                // Dont return here, try to continue. Device might be in use, or have other
+                // issues.
                 // TODO: Ensure this does not cause an infinite loop.
             } else {
                 println!("Interface claimed successfully!");
@@ -136,7 +137,12 @@ fn send_hex_report(
     let timeout = Duration::from_millis(1000); // 1 second timeout
 
     // Print the data being sent
-    println!("Sending data {:x?}", bytes);
+    println!("Sending data (as hex format) {:x?}", bytes);
+    println!("Sending data (as decimal format) {:?}", bytes);
+    let other_bytes = (2228 as u32).to_be_bytes();
+    // should be 08b4 or b4 08
+    println!("and 2228 as data is {:?}", other_bytes);
+    println!("and 2228 as hex data is {:x?}", other_bytes);
     let result = handle.write_interrupt(device_info.endpoint_out, &bytes, timeout);
     let result2 = handle.read_interrupt(device_info.endpoint_in, &mut [], timeout);
 
@@ -179,6 +185,7 @@ fn hex_to_bytes(hex_string: &str) -> Result<Vec<u8>, Error> {
         let byte = u8::from_str_radix(byte_str, 16).map_err(|_| Error::InvalidParam)?;
         bytes.push(byte);
     }
+    println!("bytes are: {bytes:?}");
     Ok(bytes)
 }
 
@@ -261,8 +268,8 @@ fn main() {
     //let hex_data = "55 55 08 03 01 00 00 06 b4 08 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0000 00 00 00 00 00 00 00 00 00 00";
     // I'll try it again without the trailing zeros:
     //let hex_data = "55 55 08 03 01 00 00 05 dc 05";
-    let hex_data = "55 55 08 03 01 00 00 06 c4 09";
-    //let hex_data = "55 55 08 03 01 00 00 06 b4 08";
+    //let hex_data = "55 55 08 03 01 00 00 06 c4 09";
+    let hex_data = "55 55 08 03 01 00 00 06 b4 08";
     let report_id: u8 = 0x00; // Set the Report ID. 0 is common, check your device.
 
     // Send the hexadecimal data to the device.

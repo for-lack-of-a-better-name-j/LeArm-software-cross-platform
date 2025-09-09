@@ -8,6 +8,8 @@ edition = "2021"
 
 [dependencies]
 dioxus = { version = "0.6.0", features = [] }
+rusb = "0.9"
+tokio = { version="1", features=["full"]} # required for async runtime and channels
 
 [features]
 default = ["desktop"]
