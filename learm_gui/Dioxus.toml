@@ -3,7 +3,7 @@
 [web.app]
 
 # HTML title tag content
-title = "learm_gui"
+title = "le_arm"
 
 # include `assets` in web platform
 [web.resource]

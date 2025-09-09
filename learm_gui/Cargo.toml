@@ -1,5 +1,5 @@
 [package]
-name = "learm_gui"
+name = "le_arm"
 version = "0.1.0"
 authors = ["Jacob Ray <jbenjamin.ray@gmail.com>"]
 edition = "2021"
@@ -8,8 +8,8 @@ edition = "2021"
 
 [dependencies]
 dioxus = { version = "0.6.0", features = [] }
+futures-util = "0.3.31"
 rusb = "0.9"
-tokio = { version="1", features=["full"]} # required for async runtime and channels
 
 [features]
 default = ["desktop"]
